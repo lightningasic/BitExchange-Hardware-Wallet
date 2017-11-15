@@ -1,0 +1,9 @@
+[submodule "bitexchange-qrenc"]
+	path = bitexchange-qrenc
+	url = https://github.com/BitExchange/bitexchange-qrenc.git
+[submodule "bitexchange-crypto"]
+	path = bitexchange-crypto
+	url = https://github.com/BitExchange/bitexchange-crypto.git
+[submodule "bitexchange-common"]
+	path = bitexchange-common
+	url = https://github.com/BitExchange/bitexchange-common.git
