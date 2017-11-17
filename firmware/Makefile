@@ -9,12 +9,12 @@ OBJS += bitexchange.o
 OBJS += pinmatrix.o
 OBJS += fsm.o
 OBJS += coins.o
-#OBJS += transaction.o
+OBJS += transaction.o
 OBJS += protect.o
 OBJS += layout2.o
 OBJS += recovery.o
 OBJS += reset.o
-#OBJS += signing.o
+OBJS += signing.o
 OBJS += crypto.o
 
 OBJS += debug.o
