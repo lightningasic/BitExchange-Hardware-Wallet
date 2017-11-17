@@ -33,9 +33,9 @@ GetPublicKey.coin_name                  max_size:21
 PublicKey.xpub				max_size:113
 
 GetAddress.address_n			max_count:8
-GetAddress.coin_name			max_size:17
+GetAddress.coin_name			max_size:21
 
-Address.address				max_size:36
+Address.address				max_size:60
 
 LoadDevice.mnemonic			max_size:241
 LoadDevice.pin				max_size:10
@@ -54,19 +54,20 @@ WordAck.word				max_size:12
 
 SignMessage.address_n			max_count:8
 SignMessage.message			max_size:1024
-SignMessage.coin_name			max_size:17
+SignMessage.coin_name			max_size:21
 
-VerifyMessage.address			max_size:36
+VerifyMessage.address			max_size:60
 VerifyMessage.signature			max_size:65
 VerifyMessage.message			max_size:1024
+VerifyMessage.coin_name 		max_size:21
 
-MessageSignature.address		max_size:36
+MessageSignature.address		max_size:60
 MessageSignature.signature		max_size:65
 
 EncryptMessage.pubkey			max_size:33
 EncryptMessage.message			max_size:1024
 EncryptMessage.address_n		max_count:8
-EncryptMessage.coin_name		max_size:17
+EncryptMessage.coin_name		max_size:21
 
 EncryptedMessage.nonce			max_size:33
 EncryptedMessage.message		max_size:1120
@@ -83,17 +84,19 @@ DecryptedMessage.message		max_size:1024
 CipherKeyValue.address_n		max_count:8
 CipherKeyValue.key			max_size:256
 CipherKeyValue.value			max_size:1024
+CipherKeyValue.iv			max_size:16
+
 
 CipheredKeyValue.value			max_size:1024
 
-EstimateTxSize.coin_name		max_size:17
+EstimateTxSize.coin_name		max_size:21
 
-SignTx.coin_name			max_size:17
+SignTx.coin_name			max_size:21
 
 SignIdentity.challenge_hidden       max_size:64
 SignIdentity.challenge_visual       max_size:64
 
-SignedIdentity.address          max_size:36
+SignedIdentity.address          max_size:60
 SignedIdentity.public_key       max_size:33
 SignedIdentity.signature        max_size:65
 
@@ -101,17 +104,17 @@ SignedIdentity.signature        max_size:65
 SimpleSignTx.inputs			max_count:0
 SimpleSignTx.outputs			max_count:0
 SimpleSignTx.transactions		max_count:0
-SimpleSignTx.coin_name			max_size:17
+SimpleSignTx.coin_name			max_size:21
 
 # not used in firmware
 FirmwareUpload.payload			max_size:0
 
-AccountLabels.coin_name         max_size:17
+AccountLabels.coin_name         max_size:21
 AccountLabels.labels            max_count:32
 
-GetAccountLabels.coin_name      max_size:17
+GetAccountLabels.coin_name      max_size:21
 
-SetAccountLabel.coin_name       max_size:17
+SetAccountLabel.coin_name       max_size:21
 SetAccountLabel.label           max_size:20
 
 DebugLinkState.layout			max_size:1024

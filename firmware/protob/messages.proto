@@ -285,6 +285,7 @@ message GetAddress {
 	optional string coin_name = 2 [default='Bitcoin'];
 	optional bool show_display = 3;
 	optional MultisigRedeemScriptType multisig = 4;	// Filled if we are showing a multisig address
+	optional InputScriptType script_type = 5 [default=SPENDADDRESS];	// used to distinguish between various address formats (non-segwit, segwit, etc.)
 }
 
 /**
@@ -396,6 +397,7 @@ message SignMessage {
 	repeated uint32 address_n = 1;				// BIP-32 path to derive the key from master node
 	required bytes message = 2;				// message to be signed
 	optional string coin_name = 3 [default='Bitcoin'];	// coin to use for signing
+	optional InputScriptType script_type = 4 [default=SPENDADDRESS];	// used to distinguish between various address formats (non-segwit, segwit, etc.)
 }
 
 /**
@@ -407,6 +409,7 @@ message VerifyMessage {
 	optional string address = 1;				// address to verify
 	optional bytes signature = 2;				// signature to verify
 	optional bytes message = 3;				// message to verify
+	optional string coin_name = 4 [default='Bitcoin'];	// coin to use for verifying
 }
 
 /**
@@ -478,6 +481,7 @@ message CipherKeyValue {
 	optional bool encrypt = 4;		// are we encrypting (True) or decrypting (False)?
 	optional bool ask_on_encrypt = 5;	// should we ask on encrypt operation?
 	optional bool ask_on_decrypt = 6;	// should we ask on decrypt operation?
+	optional bytes iv = 7;			// initialization vector (will be computed if not set)
 }
 
 /**
@@ -524,6 +528,8 @@ message SignTx {
 	required uint32 outputs_count = 1;			// number of transaction outputs
 	required uint32 inputs_count = 2;			// number of transaction inputs
 	optional string coin_name = 3 [default='Bitcoin'];	// coin to use
+	optional uint32 version = 4 [default=1];		// transaction version
+	optional uint32 lock_time = 5 [default=0];		// transaction lock_time
 }
 
 /**
@@ -540,6 +546,8 @@ message SimpleSignTx {
 	repeated TxOutputType outputs = 2;			// transaction outputs
 	repeated TransactionType transactions = 3;		// transactions whose outputs are used to build current inputs
 	optional string coin_name = 4 [default='Bitcoin'];	// coin to use
+	optional uint32 version = 5 [default=1];		// transaction version
+	optional uint32 lock_time = 6 [default=0];		// transaction lock_time
 }
 
 /**
@@ -588,6 +596,7 @@ message SignedIdentity {
     optional string address = 1;            // identity address
     optional bytes public_key = 2;          // identity public key
     optional bytes signature = 3;           // signature of the identity data
+    optional string ecdsa_curve_name = 4;		// ECDSA curve name to use
 }
 
 
