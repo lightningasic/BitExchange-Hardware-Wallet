@@ -48,23 +48,6 @@
 #include "ripemd160.h"
 #include "curves.h"
 
-/* template functions */
-void signing_abort(void)
-{
-	(void)0;
-}
-
-void signing_txack(TransactionType *tx)
-{
-	(void)tx;
-}
-void signing_init(uint32_t _inputs_count, uint32_t _outputs_count, const CoinType *_coin, const HDNode *_root)
-{
-	(void)_inputs_count;
-	(void)_outputs_count;
-	(void)_coin;
-	(void)_root;
-}
 
 // message methods
 
@@ -484,14 +467,7 @@ void fsm_msgSignTx(SignTx *msg)
 	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, 0, 0);
 	if (!node) return;
 
-	signing_init(msg->inputs_count, msg->outputs_count, coin, node);
-}
-
-void fsm_msgCancel(Cancel *msg)
-{
-	(void)msg;
-	recovery_abort();
-	signing_abort();
+	signing_init(msg->inputs_count, msg->outputs_count, coin, node, msg->version, msg->lock_time);
 }
 
 void fsm_msgTxAck(TxAck *msg)
@@ -501,6 +477,13 @@ void fsm_msgTxAck(TxAck *msg)
 	} else {
 		fsm_sendFailure(FailureType_Failure_SyntaxError, "No transaction provided");
 	}
+}
+
+void fsm_msgCancel(Cancel *msg)
+{
+	(void)msg;
+	recovery_abort();
+	signing_abort();
 }
 
 void fsm_msgCipherKeyValue(CipherKeyValue *msg)
@@ -749,8 +732,6 @@ void fsm_msgEntropyAck(EntropyAck *msg)
 
 void fsm_msgSignMessage(SignMessage *msg)
 {
-(void)msg;
-/*
 	RESP_INIT(MessageSignature);
 
 	layoutSignMessage(msg->message.bytes, msg->message.size);
@@ -778,25 +759,26 @@ void fsm_msgSignMessage(SignMessage *msg)
 			layoutProgressSwipe("Signing", 0);
 			break;
 	}
-	if (cryptoMessageSign(msg->message.bytes, msg->message.size, node->private_key, resp->signature.bytes) == 0) {
+
+	if (cryptoMessageSign(coin, node, msg->script_type, msg->message.bytes, msg->message.size, resp->signature.bytes) == 0) {
 		resp->has_address = true;
-		uint8_t addr_raw[21];
-		ecdsa_get_address_raw(node->public_key, coin->address_type, addr_raw);
-		base58_encode_check(addr_raw, 21, resp->address, sizeof(resp->address));
+		hdnode_fill_public_key(node);
+		if (!compute_address(coin, msg->script_type, node, false, NULL, resp->address)) {
+			fsm_sendFailure(FailureType_Failure_Other, "Error computing address");
+			layoutHome();
+			return;
+		}
 		resp->has_signature = true;
-		resp->signature.size = 65; 
+		resp->signature.size = 65;
 		msg_write(MessageType_MessageType_MessageSignature, resp);
 	} else {
 		fsm_sendFailure(FailureType_Failure_Other, "Error signing message");
-	}   
+	}  
 	layoutHome();
-*/
 }
 
 void fsm_msgVerifyMessage(VerifyMessage *msg)
 {
-(void)msg;
-/*
 	if (!msg->has_address) {
 		fsm_sendFailure(FailureType_Failure_Other, "No address provided");
 		return;
@@ -805,6 +787,15 @@ void fsm_msgVerifyMessage(VerifyMessage *msg)
 		fsm_sendFailure(FailureType_Failure_Other, "No message provided");
 		return;
 	} 
+
+	const CoinType *coin = fsm_getCoin(msg->has_coin_name, msg->coin_name);
+	if (!coin) return;
+	uint8_t addr_raw[MAX_ADDR_RAW_SIZE];
+	uint32_t address_type;
+	if (!coinExtractAddressType(coin, msg->address, &address_type) || !ecdsa_address_decode(msg->address, address_type, addr_raw)) {
+		fsm_sendFailure(FailureType_Failure_Other, "Invalid address");
+		return;
+	}
 	switch (storage_getLang()) {
 		case CHINESE:
 			layoutProgressSwipe("验证#.##.##.#", 0);
@@ -813,25 +804,28 @@ void fsm_msgVerifyMessage(VerifyMessage *msg)
 			layoutProgressSwipe("Verifying", 0);
 			break;
 	}
-	uint8_t addr_raw[MAX_ADDR_RAW_SIZE];
-	if (!ecdsa_address_decode(msg->address, addr_raw)) {
-		fsm_sendFailure(FailureType_Failure_InvalidSignature, "Invalid address");
-	}
-	if (msg->signature.size == 65 && cryptoMessageVerify(msg->message.bytes, msg->message.size, addr_raw, msg->signature.bytes) == 0) {
+	if (msg->signature.size == 65 && cryptoMessageVerify(coin, msg->message.bytes, msg->message.size, address_type, addr_raw, msg->signature.bytes) == 0) {
+		layoutVerifyAddress(msg->address);
+		if (!protectButton(ButtonRequestType_ButtonRequest_Other, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
 		layoutVerifyMessage(msg->message.bytes, msg->message.size);
-		protectButton(ButtonRequestType_ButtonRequest_Other, true);
+		if (!protectButton(ButtonRequestType_ButtonRequest_Other, false)) {
+			fsm_sendFailure(FailureType_Failure_ActionCancelled, NULL);
+			layoutHome();
+			return;
+		}
 		fsm_sendSuccess("Message verified");
 	} else {
 		fsm_sendFailure(FailureType_Failure_InvalidSignature, "Invalid signature");
 	}
 	layoutHome();
-*/
 }
 
 void fsm_msgSignIdentity(SignIdentity *msg)
 {
-(void)msg;
-/*
 	RESP_INIT(SignedIdentity);
 
 	layoutSignIdentity(&(msg->identity), msg->has_challenge_visual ? msg->challenge_visual : 0);
@@ -852,6 +846,7 @@ void fsm_msgSignIdentity(SignIdentity *msg)
 		layoutHome();
 		return;
 	}
+
 	uint32_t address_n[5];
 	address_n[0] = 0x80000000 | 13;
 	address_n[1] = 0x80000000 | hash[ 0] | (hash[ 1] << 8) | (hash[ 2] << 16) | (hash[ 3] << 24);
@@ -866,11 +861,11 @@ void fsm_msgSignIdentity(SignIdentity *msg)
 	HDNode *node = fsm_getDerivedNode(curve, address_n, 5);
 	if (!node) return;
 
-	uint8_t message[256 + 256];
-	memcpy(message, msg->challenge_hidden.bytes, msg->challenge_hidden.size);
-	const int len = strlen(msg->challenge_visual);
-	memcpy(message + msg->challenge_hidden.size, msg->challenge_visual, len);
+	bool sign_ssh = msg->identity.has_proto && (strcmp(msg->identity.proto, "ssh") == 0);
+	bool sign_gpg = msg->identity.has_proto && (strcmp(msg->identity.proto, "gpg") == 0);
 
+	int result = 0;
+	
 	switch (storage_getLang()) {
 		case CHINESE:
 			layoutProgressSwipe("签名#.##.##.#", 0);
@@ -879,14 +874,32 @@ void fsm_msgSignIdentity(SignIdentity *msg)
 			layoutProgressSwipe("Signing", 0);
 			break;
 	}
-	if (cryptoMessageSign(message, msg->challenge_hidden.size + len, node->private_key, resp->signature.bytes) == 0) {
-		resp->has_address = true;
-		uint8_t addr_raw[21];
-		ecdsa_get_address_raw(node->public_key, 0x00, addr_raw); // hardcoded Bitcoin address type
-		base58_encode_check(addr_raw, 21, resp->address, sizeof(resp->address));
+	if (sign_ssh) { // SSH does not sign visual challenge
+		result = sshMessageSign(node, msg->challenge_hidden.bytes, msg->challenge_hidden.size, resp->signature.bytes);
+	} else if (sign_gpg) { // GPG should sign a message digest
+		result = gpgMessageSign(node, msg->challenge_hidden.bytes, msg->challenge_hidden.size, resp->signature.bytes);
+	} else {
+		uint8_t digest[64];
+		sha256_Raw(msg->challenge_hidden.bytes, msg->challenge_hidden.size, digest);
+		sha256_Raw((const uint8_t *)msg->challenge_visual, strlen(msg->challenge_visual), digest + 32);
+		result = cryptoMessageSign(&(coins[0]), node, InputScriptType_SPENDADDRESS, digest, 64, resp->signature.bytes);
+	}
+
+	if (result == 0) {
+		hdnode_fill_public_key(node);
+		if (strcmp(curve, SECP256K1_NAME) != 0) {
+			resp->has_address = false;
+		} else {
+			resp->has_address = true;
+			hdnode_get_address(node, 0x00, resp->address, sizeof(resp->address)); // hardcoded Bitcoin address type
+		}
 		resp->has_public_key = true;
 		resp->public_key.size = 33;
 		memcpy(resp->public_key.bytes, node->public_key, 33);
+		if (node->public_key[0] == 1) {
+			/* ed25519 public key */
+			resp->public_key.bytes[0] = 0;
+		}
 		resp->has_signature = true;
 		resp->signature.size = 65;
 		msg_write(MessageType_MessageType_SignedIdentity, resp);
@@ -894,12 +907,16 @@ void fsm_msgSignIdentity(SignIdentity *msg)
 		fsm_sendFailure(FailureType_Failure_Other, "Error signing identity");
 	}
 	layoutHome();
-*/
 }
 
+/*
+ * @Deprecated
+ */
 void fsm_msgEncryptMessage(EncryptMessage *msg)
 {
-(void)msg;
+	(void)msg;
+	fsm_sendFailure(FailureType_Failure_Other, "Method was deprecated!");
+
 /*
 	if (!msg->has_pubkey) {
 		fsm_sendFailure(FailureType_Failure_SyntaxError, "No public key provided");
@@ -965,9 +982,14 @@ void fsm_msgEncryptMessage(EncryptMessage *msg)
 */
 }
 
+/*
+ * @Deprecated
+ */
 void fsm_msgDecryptMessage(DecryptMessage *msg)
 {
-(void)msg;
+	(void)msg;
+	fsm_sendFailure(FailureType_Failure_Other, "Method was deprecated!");
+
 /*
 	if (!msg->has_nonce) {
 		fsm_sendFailure(FailureType_Failure_SyntaxError, "No nonce provided");
@@ -1030,9 +1052,14 @@ void fsm_msgDecryptMessage(DecryptMessage *msg)
 */
 }
 
+/*
+ * @Deprecated
+ */
 void fsm_msgEstimateTxSize(EstimateTxSize *msg)
 {
-(void)msg;
+	(void)msg;
+	fsm_sendFailure(FailureType_Failure_Other, "Method was deprecated!");
+
 /*
 	RESP_INIT(TxSize);
 	resp->has_tx_size = true;
