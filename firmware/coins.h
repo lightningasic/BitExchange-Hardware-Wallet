@@ -32,5 +32,8 @@ const CoinType *coinByShortcut(const char *shortcut);
 const CoinType *coinByName(const char *name);
 const CoinType *coinByAddressType(uint8_t address_type);
 uint32_t coinIndex(const char *name);
+bool coinExtractAddressType(const CoinType *coin, const char *addr, uint32_t *address_type);
+bool coinExtractAddressTypeRaw(const CoinType *coin, const uint8_t *addr_raw, uint32_t *address_type);
+
 
 #endif

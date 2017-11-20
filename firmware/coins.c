@@ -89,7 +89,7 @@ uint32_t coinIndex(const char *name)
 	return INVAILD_COINS;   
 
 }
-/*
+
 bool coinExtractAddressType(const CoinType *coin, const char *addr, uint32_t *address_type)
 {
 	if (!addr) return false;
@@ -114,5 +114,5 @@ bool coinExtractAddressTypeRaw(const CoinType *coin, const uint8_t *addr_raw, ui
 	*address_type = 0;
 	return false;
 }
-*/
+
 
