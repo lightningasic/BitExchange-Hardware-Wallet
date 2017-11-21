@@ -19,6 +19,9 @@
 
 #include <string.h>
 #include "coins.h"
+#include "address.h"
+#include "ecdsa.h"
+#include "base58.h"
 
 /*
 const CoinType coins[COINS_COUNT] = {
