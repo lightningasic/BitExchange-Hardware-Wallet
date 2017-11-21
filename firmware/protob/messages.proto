@@ -583,9 +583,10 @@ message TxAck {
  * @next Failure
  */
 message SignIdentity {
-    optional IdentityType identity = 1;     // identity
-    optional bytes challenge_hidden = 2;        // non-visible challenge
-    optional string challenge_visual = 3;       // challenge shown on display (e.g. date+time)
+	optional IdentityType identity = 1;		// identity
+	optional bytes challenge_hidden = 2;		// non-visible challenge
+	optional string challenge_visual = 3;		// challenge shown on display (e.g. date+time)
+	optional string ecdsa_curve_name = 4;		// ECDSA curve name to use
 }
 
 /**
@@ -596,7 +597,6 @@ message SignedIdentity {
     optional string address = 1;            // identity address
     optional bytes public_key = 2;          // identity public key
     optional bytes signature = 3;           // signature of the identity data
-    optional string ecdsa_curve_name = 4;		// ECDSA curve name to use
 }
 
 

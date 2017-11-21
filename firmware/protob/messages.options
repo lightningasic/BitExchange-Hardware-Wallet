@@ -93,8 +93,9 @@ EstimateTxSize.coin_name		max_size:21
 
 SignTx.coin_name			max_size:21
 
-SignIdentity.challenge_hidden       max_size:64
-SignIdentity.challenge_visual       max_size:64
+SignIdentity.challenge_hidden       max_size:256
+SignIdentity.challenge_visual       max_size:256
+SignIdentity.ecdsa_curve_name		max_size:32
 
 SignedIdentity.address          max_size:60
 SignedIdentity.public_key       max_size:33
