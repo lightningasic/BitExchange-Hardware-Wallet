@@ -267,6 +267,25 @@ void layoutSignMessage(const uint8_t *msg, uint32_t len)
 	}
 }
 
+void layoutVerifyAddress(const char *address)
+{
+	const char **str = split_message((const uint8_t *)address, strlen(address), 17);
+	switch (storage_getLang()) {
+		case CHINESE :
+			layoutZhDialogSwipe(DIALOG_ICON_QUESTION, "取消", "确认",
+					"地址确认#?#",
+					"消息签名者#?#"
+					str[0], str[1], str[2]);
+			break;
+		default :
+			layoutDialogSwipe(DIALOG_ICON_QUESTION, "Cancel", "Confirm",
+					"Confirm address?",
+					"Message signed by:?",
+					str[0], str[1], str[2], NULL, NULL);
+			break;
+	}
+}
+
 void layoutVerifyMessage(const uint8_t *msg, uint32_t len)
 {
 

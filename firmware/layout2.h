@@ -34,6 +34,7 @@ void layoutConfirmTx(const CoinType *coin, uint64_t amount_out, uint64_t amount_
 void layoutFeeOverThreshold(const CoinType *coin, uint64_t fee, uint32_t kb);
 void layoutSignMessage(const uint8_t *msg, uint32_t len);
 void layoutVerifyMessage(const uint8_t *msg, uint32_t len);
+void layoutVerifyAddress(const char *address);
 void layoutCipherKeyValue(bool encrypt, const char *key);
 void layoutAddress(const char *address);
 void layoutSignIdentity(const IdentityType *identity, const char *challenge);
