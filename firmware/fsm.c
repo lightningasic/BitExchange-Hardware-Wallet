@@ -651,8 +651,6 @@ void fsm_msgApplySettings(ApplySettings *msg)
 
 void fsm_msgGetAddress(GetAddress *msg)
 {
-(void)msg;
-/*
 	RESP_INIT(Address);
 
 	if (!protectPin(true)) {
@@ -662,36 +660,24 @@ void fsm_msgGetAddress(GetAddress *msg)
 
 	const CoinType *coin = fsm_getCoin(msg->has_coin_name, msg->coin_name);
 	if (!coin) return;
-	const HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n, msg->address_n_count);
+	HDNode *node = fsm_getDerivedNode(SECP256K1_NAME, msg->address_n, msg->address_n_count);
 	if (!node) return;
+	hdnode_fill_public_key(node);
 
+	char address[MAX_ADDR_SIZE];
+	switch (storage_getLang()) {
+	case CHINESE :
+		layoutProgressSwipe("计算地址#.##.##.#", 0);
+		break;
+	default :
+		layoutProgressSwipe("Computing address", 0);
+		break;
 
-	if (msg->has_multisig) {
-		switch (storage_getLang()) {
-			case CHINESE :
-				layoutProgressSwipe("准备#.##.##.#", 0);
-				break;
-			default :
-				layoutProgressSwipe("Preparing", 0);
-				break;
-
-		}
-		if (cryptoMultisigPubkeyIndex(&(msg->multisig), node->public_key) < 0) {
-			fsm_sendFailure(FailureType_Failure_Other, "Pubkey not found in multisig script");
-			layoutHome();
-			return;
-		}   
-		uint8_t buf[32];
-		if (compile_script_multisig_hash(&(msg->multisig), buf) == 0) {
-			fsm_sendFailure(FailureType_Failure_Other, "Invalid multisig script");
-			layoutHome();
-			return;
-		}   
-		ripemd160(buf, 32, buf + 1); 
-		buf[0] = coin->address_type_p2sh;
-		base58_encode_check(buf, 21, resp->address, sizeof(resp->address));
-	} else {
-		ecdsa_get_address(node->public_key, coin->address_type, resp->address, sizeof(resp->address));
+	}
+	if (!compute_address(coin, msg->script_type, node, msg->has_multisig, &msg->multisig, address)) {
+		fsm_sendFailure(FailureType_Failure_SyntaxError, "Can't encode address");
+		layoutHome();
+		return;
 	}
 
 	if (msg->has_show_display && msg->show_display) {
@@ -704,21 +690,23 @@ void fsm_msgGetAddress(GetAddress *msg)
 			desc[6] = '0' + (m % 10);
 			desc[11] = (n < 10) ? ' ': ('0' + (n / 10));
 			desc[12] = '0' + (n % 10);
-
 		} else {
 			strlcpy(desc, "Address:", sizeof(desc));
 		}
-		layoutAddress(resp->address);
-		if (!protectButton(ButtonRequestType_ButtonRequest_Address, true)) {
-			fsm_sendFailure(FailureType_Failure_ActionCancelled, "Show address cancelled");
-			layoutHome();
-			return;
+		bool qrcode = false;
+
+		for (;;) {
+			layoutAddress(address, desc, qrcode);
+			if (protectButton(ButtonRequestType_ButtonRequest_Address, false)) {
+				break;
+			}
+			qrcode = !qrcode;
 		}
 	}
 
+	strlcpy(resp->address, address, sizeof(resp->address));
 	msg_write(MessageType_MessageType_Address, resp);
 	layoutHome();
-*/
 }	
 
 void fsm_msgEntropyAck(EntropyAck *msg)
