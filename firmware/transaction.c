@@ -28,6 +28,7 @@
 #include "crypto.h"
 #include "ripemd160.h"
 #include "base58.h"
+#include "address.h"
 #include "messages.pb.h"
 #include "types.pb.h"
 
@@ -218,7 +219,7 @@ int compile_output(const CoinType *coin, const HDNode *root, TxOutputType *in, T
 
 }
 
-uint32_t compile_script_sig(uint8_t address_type, const uint8_t *pubkeyhash, uint8_t *out)
+uint32_t compile_script_sig(uint32_t address_type, const uint8_t *pubkeyhash, uint8_t *out)
 {
 	if (coinByAddressType(address_type)) { // valid coin type
 		out[0] = 0x76; // OP_DUP
