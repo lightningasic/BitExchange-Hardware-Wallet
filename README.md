@@ -41,6 +41,7 @@ $cd  libopencm3
 $git checkout 7dbb93c78411b37bec64b5ca5be55076b0ab1b15
 $make
 ```
+完成后接着docker内编译步骤4继续进行。
 
 
 ## 编译说明(docker内编译)
@@ -55,8 +56,22 @@ git clone https://github.com/lightningasic/BitExchange-Hardware-Wallet.git
 ```sh
 docker cp BitExchange-Hardware-Wallet <containerID>:/home/root
 ```
+3、下载stm32所用的libopencm3到vendor目录
 
-3、进入容器编译firmware(在主机编译步骤一致）
+切换到vendor目录执行：
+```sh
+$git clone https://github.com/libopencm3/libopencm3.git
+```
+
+4、编译库
+
+```sh
+$cd  libopencm3
+$git checkout 7dbb93c78411b37bec64b5ca5be55076b0ab1b15
+$make
+```
+
+5、进入容器编译firmware(在主机编译步骤一致）
 
 - 编译protobuf文件
 ```sh
@@ -74,7 +89,7 @@ $make
 
 得到bitexchange.bin 二进制文件
 
-4、自已手动发布一个非官方firmware固件,进入firmware目录
+6、自已手动发布一个非官方firmware固件,进入firmware目录
 
 ```sh
 $make release
@@ -83,7 +98,7 @@ $make release
 其中fingerprint：xxxxxxx为编译firmware二进制文件的hash值
 得到一个bitexchange-x.x.x.bin.hex的十六进制文件，此文件可用后面的刷新固件程序将它烧进BitExchange硬件钱包里面
 
-5、验证firmware程序
+7、验证firmware程序
 - 用bitexchange-tools刷写固件
 - 可以在校验固件的步骤，对比编译出来的fingerprint值是否与升级后的一致，也可对比相关值与官方更新所得到的值是否一致。
 
